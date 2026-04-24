@@ -1,0 +1,10 @@
+name = "bhs-mcp"
+main = "src/index.ts"
+compatibility_date = "2026-04-01"
+
+routes = [
+  { pattern = "bhs.jackemcpherson.com/mcp*", zone_name = "jackemcpherson.com" }
+]
+
+[[worker_loaders]]
+binding = "LOADER"
