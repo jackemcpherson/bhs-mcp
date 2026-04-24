@@ -156,7 +156,7 @@ Update item quantities. Set quantity to 0 to remove. Returns \`Promise<Checkout>
 Delete a checkout. Returns \`Promise<void>\`.
 
 ### \`bhs.cart.checkoutUrl(uid)\`
-Get the browser checkout URL. Returns \`string\`.
+Get the browser checkout URL. Returns \`Promise<string>\`. **Must be awaited.**
 
 ## Example Queries
 
@@ -183,7 +183,7 @@ const updated = await bhs.cart.addItems(checkout.uid, [
 return {
   total: updated.total,
   discount: updated.lineItems[0]?.discounts[0]?.discountName,
-  checkoutUrl: bhs.cart.checkoutUrl(checkout.uid),
+  checkoutUrl: await bhs.cart.checkoutUrl(checkout.uid),
 };
 \`\`\`
 `;
