@@ -119,7 +119,7 @@ export class BhsProxy extends WorkerEntrypoint<Env> {
     if (!result.success) throw new Error(result.error.message);
   }
 
-  cartCheckoutUrl(uid: string) {
+  async cartCheckoutUrl(uid: string) {
     return `${SHARECART_BASE}/${uid}`;
   }
 }
@@ -133,11 +133,14 @@ export interface ExecuteResult {
 export async function executeCode(
   code: string,
   env: Env,
-  _ctx: ExecutionContext,
+  ctx: ExecutionContext,
 ): Promise<ExecuteResult> {
   const start = Date.now();
 
   try {
+    // Instantiate BhsProxy via ctx.exports (WorkerEntrypoint RPC pattern)
+    const bhsProxy = (ctx as unknown as { exports: { BhsProxy: (opts: { props: object }) => unknown } }).exports.BhsProxy({ props: {} });
+
     const wrappedCode = `
       export default {
         async fetch(request, env) {
@@ -152,7 +155,7 @@ export async function executeCode(
               addItems: (uid, items) => env.__bhs.cartAddItems(uid, items),
               updateQuantity: (uid, items) => env.__bhs.cartUpdateQuantity(uid, items),
               delete: (uid) => env.__bhs.cartDelete(uid),
-              checkoutUrl: (uid) => env.__bhs.cartCheckoutUrl(uid),
+              checkoutUrl: async (uid) => env.__bhs.cartCheckoutUrl(uid),
             },
           };
           const __result = await (async () => { ${code} })();
@@ -167,7 +170,7 @@ export async function executeCode(
       compatibilityDate: "2026-04-01",
       mainModule: "agent.js",
       modules: { "agent.js": wrappedCode },
-      env: { __bhs: new BhsProxy(_ctx, env) },
+      env: { __bhs: bhsProxy },
       globalOutbound: null,
     });
 
