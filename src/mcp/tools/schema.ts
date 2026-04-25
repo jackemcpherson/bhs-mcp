@@ -41,10 +41,10 @@ interface Product {
   varietal_lvl0: string | null;           // Primary grape (e.g. "Red")
   varietal_lvl1: string | null;           // Specific grape (e.g. "Grenache")
 
-  // Region hierarchy
-  region_lvl0: string | null;             // Country (Australia, France, Italy, etc.)
-  region_lvl1: string | null;             // Sub-region (e.g. "Barossa Valley")
-  region_lvl2: string | null;             // Micro-region
+  // Region hierarchy (may be undefined for non-wine products)
+  region_lvl0?: string | null;            // Country (Australia, France, Italy, etc.)
+  region_lvl1?: string | null;            // Sub-region (e.g. "Barossa Valley")
+  region_lvl2?: string | null;            // Micro-region
 
   // Tasting & descriptors
   tastesLike: string | null;
