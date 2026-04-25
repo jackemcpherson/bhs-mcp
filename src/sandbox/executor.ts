@@ -64,6 +64,17 @@ export class BhsProxy extends WorkerEntrypoint<Env> {
     });
 
     if (!result.success) throw new Error(result.error.message);
+
+    // Post-filter for actual per-warehouse stock availability.
+    // The Meilisearch filter only checks warehouse presence, not quantity.
+    if (params?.inStock) {
+      const filtered = result.data.hits.filter((hit) => {
+        const wh = hit.warehouses.find((w) => w.code === warehouseCode);
+        return wh !== undefined && wh.availableQty > 0;
+      });
+      return { ...result.data, hits: filtered };
+    }
+
     return result.data;
   }
 

@@ -108,6 +108,9 @@ interface Store {
   allowCNC: boolean | null;     // click & collect availability
 }
 
+// Note: subtotal and discountedSubtotal may return the same value even when
+// line-item discounts are applied. For accurate discounted totals, sum
+// lineItems[].discountedPrice * quantity.
 interface Checkout {
   uid: string;
   status: string;
@@ -158,18 +161,18 @@ Parameters (all optional):
 - \`query\`: string — free-text search
 - \`type\`: string — "Wine", "Spirits", "Beer", "AlcoholFree", "Food", "Giftware"
 - \`country\`: string — filter by region_lvl0 (e.g., "France", "Australia", "Italy")
-- \`region\`: string — filter by region/subregion via productAttributes.name
-- \`varietal\`: string — grape variety via productAttributes.name
+- \`region\`: string — exact match on productAttributes.name. Use \`bhs.facets("region_lvl1")\` to discover valid values
+- \`varietal\`: string — exact match on productAttributes.name (e.g., "Grenache", "Pinot Noir"). Note: sparkling wines use "Bubbles" not "Sparkling". Use \`bhs.facets("varietal_lvl1")\` to discover valid values. Rosé requires the accent: "Rosé" not "Rose"
 - \`body\`: string — "Light", "Light - Medium", "Medium", "Medium - Full", "Full"
 - \`drinkability\`: string — "Guzzle", "Impress", "Contemplate"
 - \`farming\`: string — "Organic", "Biodynamic", "Sustainable", "Conventional"
 - \`dietary\`: string — "Vegan", "Vegan & Sulphur Free", "Sulphur Free"
 - \`priceMin\`: number
 - \`priceMax\`: number
-- \`inStock\`: boolean
+- \`inStock\`: boolean — filters to products with actual per-warehouse stock (availableQty > 0). May return fewer results than \`limit\` when many indexed products are out of stock
 - \`sort\`: "price:asc" | "price:desc"
 - \`limit\`: number (default 20, max 100)
-- \`store\`: string — warehouse code for stock filtering
+- \`store\`: string — warehouse code for stock filtering. Use \`bhs.stores()\` to find codes
 
 ### \`bhs.product(sku)\`
 Get a single product by SKU. Returns \`Promise<Product>\`.
@@ -233,6 +236,15 @@ return {
   discount: updated.lineItems[0]?.discounts[0]?.discountName,
   checkoutUrl: await bhs.cart.checkoutUrl(checkout.uid),
 };
+\`\`\`
+
+**Discover valid filter values with facets:**
+\`\`\`typescript
+// Find what varietals are available before filtering
+const facets = await bhs.facets("varietal_lvl1");
+return Object.entries(facets.facetDistribution["varietal_lvl1"])
+  .sort(([,a], [,b]) => b - a)
+  .slice(0, 10);
 \`\`\`
 `;
 }
