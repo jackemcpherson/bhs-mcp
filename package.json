@@ -10,7 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@jackemcpherson/bhs-cli": "^2.2.2"
+    "@jackemcpherson/bhs-cli": "^2.2.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.0.0",
