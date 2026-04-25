@@ -8,6 +8,11 @@ The sandbox has access to a \`bhs\` object with methods for searching products, 
 ## Type Definitions
 
 \`\`\`typescript
+interface ProductNamedField {
+  name: string | null;
+  code: string | null;
+}
+
 interface Product {
   id: string;
   name: string;
@@ -17,17 +22,50 @@ interface Product {
   masterSku: string;
   price: number;
   isInStock: boolean;
+  stockStatus: string;
   totalAvailableQty: number;
+  isFeaturedProduct: boolean;
+  soldCount: number;            // popularity indicator
   variants: ProductVariant[];
-  productAttributes: ProductAttribute[];
+  productAttributes: ProductAttribute[];  // includes body info (type: "BODY")
   warehouses: ProductWarehouse[];
-  drinkability: { name: string | null; code: string | null };
-  dietary: { name: string | null; code: string | null };
-  body: { name: string | null; code: string | null };
-  farming: string | null;
-  region_lvl0: string | null;   // Country (Australia, France, Italy, etc.)
+  tags: readonly string[];
+
+  // Classification
+  drinkability: ProductNamedField;        // "Guzzle", "Impress", "Contemplate"
+  dietary: ProductNamedField;
+  style: ProductNamedField;
+  type: ProductNamedField;
+
+  // Varietal hierarchy
+  varietal_lvl0: string | null;           // Primary grape (e.g. "Red")
+  varietal_lvl1: string | null;           // Specific grape (e.g. "Grenache")
+
+  // Region hierarchy
+  region_lvl0: string | null;             // Country (Australia, France, Italy, etc.)
+  region_lvl1: string | null;             // Sub-region (e.g. "Barossa Valley")
+  region_lvl2: string | null;             // Micro-region
+
+  // Tasting & descriptors
+  tastesLike: string | null;
+  crush: string | null;
+  setting: string | null;
+  farming: string | readonly string[] | null;   // "Organic", "Biodynamic", etc.
+
+  // Marketing
+  callOutPrimary: string;
+  callOutSecondary: string;
+
+  // Collections & tags
+  customCollections: readonly string[] | null;
+  dietaryTags: string | readonly string[] | null;
+  stylisticChoices: string | readonly string[] | null;
+
   coverImageUrl: string;
 }
+
+// Note: body info is NOT a direct Product field. Access it via
+// productAttributes (entries with type "BODY") or the body.name facet.
 
 interface ProductVariant {
   sku: string;
@@ -35,6 +73,7 @@ interface ProductVariant {
   price: number;
   quantityAvailable: number;
   quantityInVariant: number;
+  status: string;
 }
 
 interface ProductAttribute {
@@ -52,6 +91,7 @@ interface ProductWarehouse {
 interface SearchResult {
   hits: Product[];
   query: string;
+  processingTimeMs: number;
   estimatedTotalHits: number;
   limit: number;
   offset: number;
@@ -59,11 +99,13 @@ interface SearchResult {
 
 interface Store {
   id: string;
+  slug: string;
   name: string;
   postCode: string | null;
   warehouseCode: string;
   address: string | null;
   phone: string | null;
+  allowCNC: boolean | null;     // click & collect availability
 }
 
 interface Checkout {
@@ -170,7 +212,13 @@ const results = await bhs.search({
   limit: 5,
 });
 return results.hits.map(w => ({
-  name: w.name, price: w.price, region: w.region_lvl0
+  name: w.name,
+  price: w.price,
+  region: w.region_lvl0,
+  subRegion: w.region_lvl1,
+  varietal: w.varietal_lvl1,
+  style: w.style?.name,
+  tastesLike: w.tastesLike,
 }));
 \`\`\`
 
