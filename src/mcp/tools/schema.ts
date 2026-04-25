@@ -135,7 +135,7 @@ Get a single product by SKU. Returns \`Promise<Product>\`.
 ### \`bhs.facets(name?)\`
 Get facet distributions. Without name, returns all facet names. With name, returns values and counts. Returns \`Promise<FacetResult>\`.
 
-Available facet names: varietal_lvl0, varietal_lvl1, drinkability.name, region_lvl0, region_lvl1, region_lvl2, customCollections, body, farming, dietaryTags, type.name, stylisticChoices
+Available facet names: varietal_lvl0, varietal_lvl1, drinkability.name, region_lvl0, region_lvl1, region_lvl2, customCollections, body.name, farming, dietaryTags, type.name, stylisticChoices
 
 ### \`bhs.stores()\`
 List all store locations. Returns \`Promise<Store[]>\`.

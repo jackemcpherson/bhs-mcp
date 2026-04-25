@@ -75,8 +75,17 @@ export class BhsProxy extends WorkerEntrypoint<Env> {
 
   async facets(name?: string) {
     const { FACET_NAMES } = await import("@jackemcpherson/bhs-cli");
-    const names = name ? [name] : FACET_NAMES;
-    const result = await getFacets(names, DEFAULT_WAREHOUSE);
+    if (!name) {
+      const result = await getFacets(FACET_NAMES, DEFAULT_WAREHOUSE);
+      if (!result.success) throw new Error(result.error.message);
+      return result.data;
+    }
+    const lower = name.toLowerCase();
+    const resolved =
+      FACET_NAMES.find((f: string) => f.toLowerCase() === lower) ??
+      FACET_NAMES.find((f: string) => f.toLowerCase().startsWith(lower));
+    if (!resolved) throw new Error(`Invalid facet: "${name}" — valid facets are: ${FACET_NAMES.join(", ")}`);
+    const result = await getFacets([resolved], DEFAULT_WAREHOUSE);
     if (!result.success) throw new Error(result.error.message);
     return result.data;
   }
