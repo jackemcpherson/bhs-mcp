@@ -8,3 +8,6 @@ routes = [
 
 [[worker_loaders]]
 binding = "LOADER"
+
+[observability]
+enabled = true
