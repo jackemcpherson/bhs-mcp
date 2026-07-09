@@ -5,6 +5,7 @@ name: Publish artifact
 # Deployment happens from the cloudflare-infra repo by bumping
 # bhs_mcp_version to this SHA and running the gated apply-prod workflow.
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
