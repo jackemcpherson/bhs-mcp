@@ -5,13 +5,13 @@ name: Publish artifact
 # Deployment happens from the cloudflare-infra repo by bumping
 # bhs_mcp_version to this SHA and running the gated apply-prod workflow.
 on:
-  workflow_dispatch:
   push:
     branches: [main]
     paths:
       - "src/**"
       - "wrangler.toml"
       - "package.json"
+      - "bun.lock"
       - ".github/workflows/publish.yml"
 
 concurrency:
@@ -22,12 +22,20 @@ permissions:
   contents: read
 
 jobs:
+  ci:
+    name: CI checks
+    uses: ./.github/workflows/ci.yml
+
   publish:
     name: Check and publish to R2
+    needs: ci
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment: production
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
@@ -35,13 +43,6 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
-
-      - name: Typecheck
-        run: bun run typecheck
-
-      - name: Test
-        # No test files yet — passWithNoTests keeps the gate green until some exist.
-        run: bun x vitest run --passWithNoTests
 
       - name: Build Worker bundle
         run: bunx wrangler deploy --dry-run --outdir dist
@@ -51,8 +52,12 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          SHA="$(echo "${GITHUB_SHA}" | cut -c1-7)"
-          echo "Publishing bhs-mcp/${SHA}.js"
-          bunx wrangler r2 object put "worker-artifacts/bhs-mcp/${SHA}.js" \
+          ARTIFACT_DIGEST="$(sha256sum dist/index.js | cut -d' ' -f1)"
+          echo "Publishing bhs-mcp/${GITHUB_SHA}.js"
+          bunx wrangler r2 object put "worker-artifacts/bhs-mcp/${GITHUB_SHA}.js" \
             --file dist/index.js --remote
-          echo "Deploy by bumping bhs_mcp_version to ${SHA} in cloudflare-infra."
+          {
+            echo "### Published Worker artifact"
+            echo "- Commit: \`${GITHUB_SHA}\`"
+            echo "- \`bhs-mcp/${GITHUB_SHA}.js\`: \`${ARTIFACT_DIGEST}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
